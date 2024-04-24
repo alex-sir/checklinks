@@ -2,7 +2,7 @@
 BINS = checklinks 
 
 # Setting the flags
-CFLAGS = -g -Wall -Wstrict-prototypes
+CFLAGS = -g -Wall -Wextra -Wstrict-prototypes
 
 # Link in support for debugging
 LDFLAGS = -g
@@ -21,16 +21,16 @@ clean:
 	rm -f core* src/*.o *~
 
 # Link *.o files into an executable
-checklinks: src/checklinks.o
+checklinks: src/checklinks.o src/find.o src/helpers.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # Run tests
 test: checklinks
-	./checklinks
+	./checklinks https://users.tricity.wsu.edu/~bobl/cpts360/
 
 # Check for memory leaks
 mem: checklinks
-	valgrind --leak-check=full --show-leak-kinds=all -s ./checklinks
+	valgrind --leak-check=full --show-leak-kinds=all -s ./checklinks https://users.tricity.wsu.edu/~bobl/cpts360/
 
 # Remove all files that can be reconstructed through "make"
 .PHONY: immaculate
