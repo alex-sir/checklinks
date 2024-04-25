@@ -4,62 +4,86 @@
  *  checklinks
  */
 
-#include <stdio.h>
-#include <stdlib.h> // for exit
-#include <unistd.h> // for getopt()
-#include <regex.h>  // for regcomp(), regexec(), regerror()
-
-#include "find.h"
-#include "helpers.h"
-
-#define REG_ERR_SIZE 100
-
 /* test for regex
     <a href="http://www.tricity.wsu.edu/this_link_does_not_exist">link</a>
     <a href=http://www.tricity.wsu.edu/this_link_does_not_exist>link</a>
 */
-/* regex patterns
-    <[^>]*href="?(https?:[^"?#]*?)[^"]*?(?(?<=")")[^>]*>
-    <[^>]*href=(?:(https?:[^"?#]*?>)|("https?:[^"?#]*">))
-    C String:
-        <[^>]*href=(?:(https?:[^\"?#]*?>)|(\"https?:[^\"?#]*\">))
-            The "?:" syntax to not capture the group does not work in POSIX Extended Regex
-        <[^>]*href=((https?:[^\"?#]*?>)|(\"https?:[^\"?#]*\">))
-    NOTE: The "//g" syntax to search globally does not work in POSIX Extended Regex
+
+/* regex patterns for matching URLs found in links
+    C String: <[^>]*href=(\"?)(https?:[^\"?#>]*)[^\">]*(\"?)[^>]*>
 */
+
+#include <stdlib.h> // for exit, malloc()
+#include <string.h> // for strncpy()
+#include <unistd.h> // for getopt()
+#include <regex.h>  // regex_t
+
+#include "find.h"
+#include "helpers.h"
 
 int main(int argc, char *argv[])
 {
-    // no URL is provided
+    // no URL or any option is provided
     if (argc == 1)
     {
         usage(argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    regex_t regex_pattern;
-    char *regex_str = "<[^>]*href=((https?:[^\"?#]*?>)|(\"https?:[^\"?#]*\">))";
-    char regex_err[REG_ERR_SIZE] = "";
-    int regcomp_result = 0;
+    Options_Given options_given = {0, 0};
+    int opt = 0;
+    extern char *optarg;
+    extern int optind;
 
-    if ((regcomp_result = regcomp(&regex_pattern, regex_str, REG_EXTENDED | REG_ICASE)) != 0)
+    // parse all options given
+    while ((opt = getopt(argc, argv, "fhp")) != -1)
     {
-        regerror(regcomp_result, &regex_pattern, regex_err, REG_ERR_SIZE);
-        printf("regex error: %s\n", regex_err);
+        switch (opt)
+        {
+        case 'f': // treat the "urlOrFilename" argument as a local filename
+            options_given.local_filename = 1;
+            break;
+        case 'h': // print a help message and exit
+            usage(argv[0]);
+            help();
+            exit(EXIT_SUCCESS);
+            break;
+        case 'p': // run in parallel
+            options_given.parallel = 1;
+            break;
+        case '?': // invalid option character
+            usage(argv[0]);
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
+    // make the regex pattern for URLs found in links
+    regex_t regex_pattern;
+    if (make_regex_pattern(&regex_pattern) == -1)
+    {
         exit(EXIT_FAILURE);
     }
 
-    int regexec_result = 0;
-    char *regex_find1 = "<a href=\"http://www.tricity.wsu.edu/this_link_does_not_exist\">link</a>";
-    char *regex_find2 = "<a href=http://www.tricity.wsu.edu/this_link_does_not_exist>link</a>";
-    if ((regexec_result = regexec(&regex_pattern, regex_find1, 0, NULL, 0)) != 0)
+    Checklinks_Result *checklinks_results = (Checklinks_Result *)malloc(
+        CHECKLINKS_RESULT_NUM * sizeof(Checklinks_Result));
+
+    // work with a local file
+    if (options_given.local_filename)
     {
-        printf("regex_find1: match not found\n");
+        char local_filename[PATHNAME_MAX] = "";
+        strncpy(local_filename, argv[optind], PATHNAME_MAX);
+        // open the local file
     }
-    if ((regexec_result = regexec(&regex_pattern, regex_find2, 0, NULL, 0)) != 0)
+    else // work with a URL
     {
-        printf("regex_find2: match not found\n");
+        char url[URL_MAX] = "";
+        strncpy(url, argv[optind], URL_MAX);
+        // open the URL
     }
 
+    test_regex_pattern(&regex_pattern);
+
+    free(checklinks_results);
     exit(EXIT_SUCCESS);
 }
