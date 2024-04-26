@@ -11,6 +11,7 @@
 
 /* regex patterns for matching URLs found in links
     C String: <[^>]*href=(\"?)(https?:[^\"?#>]*)[^\">]*(\"?)[^>]*>
+    Normal: <[^>]*href=("?)(https?:[^"?#>]*)[^">]*("?)[^>]*>
 */
 
 #include <stdlib.h> // for exit, malloc()
@@ -85,34 +86,12 @@ int main(int argc, char *argv[])
         char url[URL_MAX] = "";
         strncpy(url, argv[optind], sizeof(url));
 
-        // check the status of the URL
-        if (check_url(url) == -1)
+        if (process_url(url, &regex_pattern, &checklinks_results) == -1)
         {
             free(checklinks_results);
             exit(EXIT_FAILURE);
-        }
-
-        remove_url_slash(url);
-
-        FILE *url_content = NULL;
-        // download the contents of the URL to standard output
-        if (download_url(url, &url_content) == -1)
-        {
-            free(checklinks_results);
-            exit(EXIT_FAILURE);
-        }
-
-        check_content(&url_content, &checklinks_results);
-
-        // close the stream
-        if (pclose(url_content) == -1)
-        {
-            print_err();
-            return -1;
         }
     }
-
-    test_regex_pattern(&regex_pattern);
 
     free(checklinks_results);
     exit(EXIT_SUCCESS);

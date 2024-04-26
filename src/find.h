@@ -7,11 +7,12 @@
 #ifndef FIND
 #define FIND
 
-#include <stdio.h>  // for printf(), fprintf(), snprintf(), popen()
-#include <stdlib.h> // for system()
-#include <string.h> // for strlen()
-#include <regex.h>  // for regex_t, regcomp(), regexec(), regerror()
-#include <sys/wait.h>
+#include <stdio.h>  // for printf(), fprintf(), snprintf(), remove()
+#include <stdlib.h> // for system(), mkstemp(), malloc()
+#include <unistd.h> // for close(), fstat(), lseek(), read()
+#include <string.h> // for strlen(), strncpy()
+#include <regex.h>  // for regex_t, regmatch_t, regcomp(), regexec(), regerror()
+#include <sys/stat.h>
 
 // sizes for strings
 #define PATHNAME_MAX 4096   // max size of a local file pathname
@@ -20,6 +21,7 @@
 #define REG_ERR_SIZE 100    // max size for the "errbuf" string in "regerror"
 
 #define BUFFER_SIZE 4096 // buffer size for when reading the contents of a URL or file
+#define TMP_SIZE 11      // size of the temporary file for checking for regex patterns
 
 #define CHECKLINKS_RESULT_NUM 100 // default number of Checklinks_Result elements
 
@@ -50,8 +52,8 @@ typedef struct
  * @return int 0 = success | -1 = error
  */
 extern int make_regex_pattern(regex_t *regex_pattern);
-// TEMP: for testing regexec
-extern void test_regex_pattern(regex_t *regex_pattern);
+extern int process_url(char url[], regex_t *regex_pattern,
+                       Checklinks_Result **checklinks_results);
 /**
  * @brief check if a given URL is able to be retrieved
  *
@@ -72,7 +74,7 @@ extern void remove_url_slash(char url[]);
  * @param url_content address to a stream to pipe the contents of the URL into
  * @return int 0 = success | -1 = error
  */
-extern int download_url(const char url[], FILE **url_content);
-extern int check_content(FILE **url_content, Checklinks_Result **checklinks_results);
+extern int download_url(const char url[], const char tmp_filename[]);
+extern int check_content(int temp_fd, const regex_t *regex_pattern);
 
 #endif
