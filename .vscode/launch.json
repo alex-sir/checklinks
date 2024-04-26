@@ -7,8 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/checklinks",
             "args": [
-                "-f",
-                "test.txt"
+                "https://users.tricity.wsu.edu/~bobl/cpts360/"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
