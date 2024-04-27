@@ -15,17 +15,17 @@
 #include <sys/stat.h>
 
 // sizes for strings
-#define PATHNAME_MAX 4096   // max size of a local file pathname
-#define URL_MAX 2000        // max size of a web URL
-#define ACCESSIBILITY_MAX 5 // max size of the "accessibility" string in Checklinks_Result
-#define REG_ERR_SIZE 100    // max size for the "errbuf" string in "regerror"
+#define PATHNAME_MAX 4096 // max size of a local file pathname
+#define URL_MAX 2000      // max size of a web URL
+#define STATUS_MAX 6      // max size of the "status" string in Checklinks_Result
+#define REG_ERR_SIZE 100  // max size for the "errbuf" string in "regerror"
 
 #define BUFFER_SIZE 4096 // buffer size for when reading the contents of a URL or file
 #define TMP_SIZE 11      // size of the temporary file for checking for regex patterns
 
 #define CHECKLINKS_RESULT_NUM 100 // default number of Checklinks_Result elements
 
-// possible values for "accessibility" in Checklinks_Result
+// possible values for "status" in Checklinks_Result
 #define IS_ACCESSIBLE "okay"
 #define NOT_ACCESSIBLE "error"
 
@@ -36,12 +36,19 @@ typedef struct
     int parallel;
 } Options_Given;
 
-// holds a URL and the results of a URL (okay/error) after running checklinks
+// holds a URL and the status of a URL (okay/error) after running checklinks
 typedef struct
 {
     char url[URL_MAX];
-    char accessibility[ACCESSIBILITY_MAX];
+    char status[STATUS_MAX];
 } Checklinks_Result;
+
+// holds a list of Checklinks_Result and the count of that list
+typedef struct
+{
+    Checklinks_Result *urls;
+    int count;
+} Checklinks_Results;
 
 #include "helpers.h"
 
@@ -52,15 +59,14 @@ typedef struct
  * @return int 0 = success | -1 = error
  */
 extern int make_regex_pattern(regex_t *regex_pattern);
-extern int process_url(char url[], regex_t *regex_pattern,
-                       Checklinks_Result **checklinks_results);
 /**
  * @brief check if a given URL is able to be retrieved
  *
  * @param url string representation of a URL
+ * @param print_err 0 = don't print error messages | 1 = print error messages
  * @return int 0 = success | -1 = error
  */
-extern int check_url(const char url[]);
+extern int check_url(const char url[], int print_err);
 /**
  * @brief remove the trailing forward slash in a URL if it is present
  *
@@ -68,13 +74,38 @@ extern int check_url(const char url[]);
  */
 extern void remove_url_slash(char url[]);
 /**
- * @brief downloads the contents (HTML) from a URL and pipe it into a stream
+ * @brief download the contents (HTML file) from a URL and save it into a temporary file
  *
  * @param url string representation of a URL
- * @param url_content address to a stream to pipe the contents of the URL into
+ * @param tmp_filename name of the temporary file
  * @return int 0 = success | -1 = error
  */
 extern int download_url(const char url[], const char tmp_filename[]);
-extern int check_content(int temp_fd, const regex_t *regex_pattern);
+/**
+ * @brief check if a URL is a duplicate in a Checklinks_Results URLs list
+ *
+ * @param checklinks_results address to a Checklinks_Results struct
+ * @param url URL to check for duplicity
+ * @return int 0 = NOT a duplicate | 1 = duplicate
+ */
+extern int is_dup_url(Checklinks_Results *checklinks_results, const char url[]);
+/**
+ * @brief check the status of all URLs in an HTML file downloaded from a URL
+ *
+ * @param temp_fd file descriptor to a temporary file where the downloaded HTML of a URL is stored
+ * @param regex_pattern regex pattern to look for when looking for URLs
+ * @param checklinks_results address to a Checklinks_Results struct
+ * @return int 0 = success | -1 = error
+ */
+extern int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
+/**
+ * @brief process all URLs present in a URL by attempting to access them
+ *
+ * @param url string to the URL to check URLs for
+ * @param regex_pattern regex pattern to look for when looking for URLs
+ * @param checklinks_results address to a Checklinks_Results struct
+ * @return int 0 = success | -1 = error
+ */
+extern int process_url(char url[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
 
 #endif

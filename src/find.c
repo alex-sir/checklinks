@@ -24,50 +24,7 @@ int make_regex_pattern(regex_t *regex_pattern)
     return 0;
 }
 
-int process_url(char url[], regex_t *regex_pattern,
-                Checklinks_Result **checklinks_results)
-{
-    // check the status of the URL
-    if (check_url(url) == -1)
-    {
-        return -1;
-    }
-
-    remove_url_slash(url);
-
-    // create a temp file
-    char tmp_filename[TMP_SIZE] = "tmp_XXXXXX";
-    int temp_fd = mkstemp(tmp_filename);
-    if (temp_fd == -1)
-    {
-        print_err();
-        return -1;
-    }
-
-    // download the contents of the URL to the temp file
-    if (download_url(url, tmp_filename) == -1)
-    {
-        return -1;
-    }
-
-    check_content(temp_fd, regex_pattern);
-
-    if (close(temp_fd) == -1)
-    {
-        print_err();
-        return -1;
-    }
-
-    if (remove(tmp_filename) == -1)
-    {
-        print_err();
-        return -1;
-    }
-
-    return 0;
-}
-
-int check_url(const char url[])
+int check_url(const char url[], int print_err)
 {
     const char *command = "wget --spider -q --delete-after -T10 -t1 ";
     char check_command[sizeof(command) + URL_MAX] = ""; // +2 for the single quotes around the URL
@@ -84,13 +41,19 @@ int check_url(const char url[])
         // check the exit status of the command
         if (exit_status != 0)
         {
-            fprintf(stderr, "checklinks: unable to retrieve URL\n");
+            if (print_err)
+            {
+                fprintf(stderr, "checklinks: unable to retrieve URL\n");
+            }
             return -1; // URL is not valid
         }
     }
     else
     {
-        fprintf(stderr, "checklinks: \"wget\" terminated abnormally\n");
+        if (print_err)
+        {
+            fprintf(stderr, "checklinks: \"wget\" terminated abnormally\n");
+        }
         return -1; // command terminated abnormally
     }
 
@@ -108,11 +71,11 @@ void remove_url_slash(char url[])
 int download_url(const char url[], const char tmp_filename[])
 {
     const char *command = "wget --no-cache -q -O ";
-    // +4 for the single quotes around the URL, space, and null terminator
+    // +4 for the single quotes around the URL, 1 space, and a null terminator
     char download_command[strlen(command) + strlen(tmp_filename) + URL_MAX + 4];
     int status = 0;
 
-    snprintf(download_command, sizeof(download_command), "%s %s '%s'", command, tmp_filename, url);
+    snprintf(download_command, sizeof(download_command), "%s%s '%s'", command, tmp_filename, url);
     system(download_command);
 
     // check if the command terminated normally
@@ -136,7 +99,20 @@ int download_url(const char url[], const char tmp_filename[])
     return 0;
 }
 
-int check_content(int temp_fd, const regex_t *regex_pattern)
+int is_dup_url(Checklinks_Results *checklinks_results, const char url[])
+{
+    for (int i = 0; i < checklinks_results->count; i++)
+    {
+        if (strcmp(url, checklinks_results->urls[i].url) == 0)
+        {
+            return 1; // link is a duplicate
+        }
+    }
+
+    return 0; // link is NOT a duplicate
+}
+
+int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
 {
     // get the size of the temp file
     struct stat temp_stat;
@@ -166,24 +142,95 @@ int check_content(int temp_fd, const regex_t *regex_pattern)
 
     char *current_match = temp_buffer;
     int regexec_result = 0;
-    const int NUM_GROUPS = 3;
+    const int NUM_GROUPS = 3; // number of groups in the regex pattern
     regmatch_t match[NUM_GROUPS];
     regoff_t match_len;
-    const int GROUP_CAPTURE = 2;
+    const int GROUP_CAPTURE = 2; // group to capture in the regex pattern
+    int check_url_result = 0;
 
     // search for matches
     while ((regexec_result = regexec(regex_pattern, current_match, NUM_GROUPS, match, 0)) == 0)
     {
+        // get the group
         match_len = match[GROUP_CAPTURE].rm_eo - match[GROUP_CAPTURE].rm_so;
         char match_group[match_len + 1];
         strncpy(match_group, &current_match[match[GROUP_CAPTURE].rm_so], match_len);
         match_group[match_len] = '\0';
 
-        printf("%s\n", match_group);
+        // validate memory
+        if (checklinks_results_mem(checklinks_results) == -1)
+        {
+            return -1;
+        }
+        remove_url_slash(match_group);
+        // check if the URL is a duplicate
+        if (is_dup_url(checklinks_results, match_group))
+        {
+            current_match += match[0].rm_eo;
+            continue;
+        }
+
+        strncpy(checklinks_results->urls[checklinks_results->count].url, match_group, URL_MAX);
+        // valid URL
+        if ((check_url_result = check_url(match_group, 0)) == 0)
+        {
+            strncpy(checklinks_results->urls[checklinks_results->count].status,
+                    IS_ACCESSIBLE, STATUS_MAX);
+        }
+        else // invalid URL
+        {
+            strncpy(checklinks_results->urls[checklinks_results->count].status,
+                    NOT_ACCESSIBLE, STATUS_MAX);
+        }
+        checklinks_results->count++;
 
         current_match += match[0].rm_eo; // move pointer to the end of the match
     }
 
     free(temp_buffer);
+    return 0;
+}
+
+int process_url(char url[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
+{
+    if (check_url(url, 1) == -1)
+    {
+        return -1;
+    }
+
+    remove_url_slash(url);
+
+    // create a temp file
+    char tmp_filename[TMP_SIZE] = "tmp_XXXXXX";
+    int temp_fd = mkstemp(tmp_filename);
+    if (temp_fd == -1)
+    {
+        print_err();
+        return -1;
+    }
+
+    // download the contents of the URL to the temp file
+    if (download_url(url, tmp_filename) == -1)
+    {
+        return -1;
+    }
+
+    if (check_content(temp_fd, regex_pattern, checklinks_results) == -1)
+    {
+        return -1;
+    }
+
+    if (close(temp_fd) == -1)
+    {
+        print_err();
+        return -1;
+    }
+
+    if (remove(tmp_filename) == -1)
+    {
+        print_err();
+        return -1;
+    }
+
     return 0;
 }

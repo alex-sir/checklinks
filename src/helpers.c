@@ -24,3 +24,31 @@ void help(void)
     printf("-h   print a help message and exit (this page)\n");
     printf("-p   run in parallel\n");
 }
+
+int checklinks_results_mem(Checklinks_Results *checklinks_results)
+{
+    // checklinks_results filled
+    if (checklinks_results->count % CHECKLINKS_RESULT_NUM == 0 && checklinks_results->count != 0)
+    {
+        checklinks_results->urls = (Checklinks_Result *)realloc(
+            checklinks_results->urls,
+            (checklinks_results->count + CHECKLINKS_RESULT_NUM) * sizeof(Checklinks_Result));
+
+        if (checklinks_results->urls == NULL)
+        {
+            print_err();
+            return -1; // error
+        }
+    }
+
+    return 0;
+}
+
+void print_urls(Checklinks_Results *checklinks_results)
+{
+    for (int i = 0; i < checklinks_results->count; i++)
+    {
+        printf("%-*s%s\n", 7, checklinks_results->urls[i].status,
+               checklinks_results->urls[i].url);
+    }
+}

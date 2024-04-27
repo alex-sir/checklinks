@@ -66,9 +66,10 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    Checklinks_Result *checklinks_results = (Checklinks_Result *)malloc(
-        CHECKLINKS_RESULT_NUM * sizeof(Checklinks_Result));
-    if (checklinks_results == NULL)
+    // holds the results of checking the links
+    Checklinks_Results checklinks_results = {
+        (Checklinks_Result *)malloc(CHECKLINKS_RESULT_NUM * sizeof(Checklinks_Result)), 0};
+    if (checklinks_results.urls == NULL)
     {
         print_err();
         exit(EXIT_FAILURE);
@@ -88,11 +89,12 @@ int main(int argc, char *argv[])
 
         if (process_url(url, &regex_pattern, &checklinks_results) == -1)
         {
-            free(checklinks_results);
+            free(checklinks_results.urls);
             exit(EXIT_FAILURE);
         }
     }
 
-    free(checklinks_results);
+    print_urls(&checklinks_results);
+    free(checklinks_results.urls);
     exit(EXIT_SUCCESS);
 }
