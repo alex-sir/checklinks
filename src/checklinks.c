@@ -104,10 +104,21 @@ int main(int argc, char *argv[])
         char local_filename[PATHNAME_MAX] = "";
         strncpy(local_filename, argv[optind], sizeof(local_filename));
 
-        if (process_file(local_filename, &regex_pattern, &checklinks_results) == -1)
+        if (!options_given.parallel)
         {
-            free(checklinks_results.urls);
-            exit(EXIT_FAILURE);
+            if (process_file(local_filename, &regex_pattern, &checklinks_results, 0) == -1)
+            {
+                free(checklinks_results.urls);
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            if (process_file(local_filename, &regex_pattern, &checklinks_results, 1) == -1)
+            {
+                free(checklinks_results.urls);
+                exit(EXIT_FAILURE);
+            }
         }
     }
 

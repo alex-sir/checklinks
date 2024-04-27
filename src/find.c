@@ -382,7 +382,8 @@ int process_url(char url[], const regex_t *regex_pattern,
     return 0;
 }
 
-int process_file(const char local_filename[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
+int process_file(const char local_filename[], const regex_t *regex_pattern,
+                 Checklinks_Results *checklinks_results, const int run_parallel)
 {
     int local_file = open(local_filename, O_RDONLY);
     if (local_file == -1)
@@ -391,9 +392,19 @@ int process_file(const char local_filename[], const regex_t *regex_pattern, Chec
         return -1;
     }
 
-    if (check_content(local_file, regex_pattern, checklinks_results, 0) == -1)
+    if (!run_parallel)
     {
-        return -1;
+        if (check_content(local_file, regex_pattern, checklinks_results, 0) == -1)
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        if (check_content(local_file, regex_pattern, checklinks_results, 1) == -1)
+        {
+            return -1;
+        }
     }
 
     if (close(local_file) == -1)

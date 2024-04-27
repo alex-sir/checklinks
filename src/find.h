@@ -156,8 +156,10 @@ extern int process_url(char url[], const regex_t *regex_pattern,
  * @param local_filename string of a path to a local file
  * @param regex_pattern regex pattern to look for when looking for URLs
  * @param checklinks_results address to a Checklinks_Results struct
+ * @param run_parallel 0 = DON'T run processes in parallel | 1 = run processes in parallel
  * @return int int 0 = success | -1 = error
  */
-extern int process_file(const char local_filename[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
+extern int process_file(const char local_filename[], const regex_t *regex_pattern,
+                        Checklinks_Results *checklinks_results, const int run_parallel);
 
 #endif
