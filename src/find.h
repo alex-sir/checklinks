@@ -7,13 +7,13 @@
 #ifndef FIND
 #define FIND
 
-#include <stdio.h>  // for printf(), fprintf(), snprintf(), remove()
-#include <stdlib.h> // for system(), mkstemp(), malloc()
-#include <unistd.h> // for close(), fstat(), lseek(), read(), fork()
-#include <string.h> // for strlen(), strncpy()
-#include <fcntl.h>  // for open()
-#include <regex.h>  // for regex_t, regmatch_t, regcomp(), regexec(), regerror()
-#include <sys/stat.h>
+#include <stdio.h>    // for printf(), fprintf(), snprintf(), remove()
+#include <stdlib.h>   // for system(), mkstemp(), malloc(), free()
+#include <unistd.h>   // for close(), fstat(), lseek(), read(), fork(), execvp()
+#include <string.h>   // for strlen(), strncpy(), strcmp()
+#include <fcntl.h>    // for open()
+#include <regex.h>    // for regex_t, regmatch_t, regcomp(), regexec(), regerror()
+#include <sys/stat.h> // for stat
 #include <sys/wait.h> // for wait()
 
 // sizes for strings

@@ -5,8 +5,8 @@
  */
 
 /* test for regex
-    <a href="http://www.tricity.wsu.edu/this_link_does_not_exist">link</a>
-    <a href=http://www.tricity.wsu.edu/this_link_does_not_exist>link</a>
+    <a href="http://www.tricity.wsu.edu/">link</a>
+    <a href=http://www.tricity.wsu.edu/>link</a>
 */
 
 /* regex patterns for matching URLs found in links
@@ -14,7 +14,7 @@
     Normal: <[^>]*href=("?)(https?:[^"?#>]*)[^">]*("?)[^>]*>
 */
 
-#include <stdlib.h> // for exit, malloc()
+#include <stdlib.h> // for exit, malloc(), free()
 #include <string.h> // for strncpy()
 #include <unistd.h> // for getopt()
 #include <regex.h>  // regex_t

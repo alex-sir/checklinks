@@ -15,9 +15,9 @@ int make_regex_pattern(regex_t *regex_pattern)
     // make the regex pattern
     if ((regcomp_result = regcomp(regex_pattern, regex_str, REG_EXTENDED | REG_ICASE)) != 0)
     {
-        // an error occurred when attempting to make the regex - print out the error
+        // an error occurred when attempting to make the regex
         regerror(regcomp_result, regex_pattern, regex_err, sizeof(regex_err));
-        fprintf(stderr, "regex error: %s\n", regex_err);
+        fprintf(stderr, "checklinks: regex error - %s\n", regex_err);
         return -1;
     }
 
