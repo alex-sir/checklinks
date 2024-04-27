@@ -335,10 +335,8 @@ int process_url(char url[], const regex_t *regex_pattern,
         return -1;
     }
 
-    remove_url_slash(url);
-
     // create a temp file
-    char tmp_filename[TMP_SIZE] = "tmp_XXXXXX";
+    char tmp_filename[TMP_NAME_SIZE] = "tmp_XXXXXX";
     int temp_fd = mkstemp(tmp_filename);
     if (temp_fd == -1)
     {
@@ -349,6 +347,8 @@ int process_url(char url[], const regex_t *regex_pattern,
     // download the contents of the URL to the temp file
     if (download_url(url, tmp_filename) == -1)
     {
+        close(temp_fd);
+        remove(tmp_filename);
         return -1;
     }
 
@@ -356,6 +356,8 @@ int process_url(char url[], const regex_t *regex_pattern,
     {
         if (check_content(temp_fd, regex_pattern, checklinks_results, 0) == -1)
         {
+            close(temp_fd);
+            remove(tmp_filename);
             return -1;
         }
     }
@@ -363,6 +365,8 @@ int process_url(char url[], const regex_t *regex_pattern,
     {
         if (check_content(temp_fd, regex_pattern, checklinks_results, 1) == -1)
         {
+            close(temp_fd);
+            remove(tmp_filename);
             return -1;
         }
     }
@@ -370,6 +374,7 @@ int process_url(char url[], const regex_t *regex_pattern,
     if (close(temp_fd) == -1)
     {
         print_err();
+        remove(tmp_filename);
         return -1;
     }
 
@@ -396,6 +401,7 @@ int process_file(const char local_filename[], const regex_t *regex_pattern,
     {
         if (check_content(local_file, regex_pattern, checklinks_results, 0) == -1)
         {
+            close(local_file);
             return -1;
         }
     }
@@ -403,6 +409,7 @@ int process_file(const char local_filename[], const regex_t *regex_pattern,
     {
         if (check_content(local_file, regex_pattern, checklinks_results, 1) == -1)
         {
+            close(local_file);
             return -1;
         }
     }

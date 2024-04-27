@@ -20,10 +20,10 @@
 #define PATHNAME_MAX 4096 // max size of a local file pathname
 #define URL_MAX 2000      // max size of a web URL
 #define STATUS_MAX 6      // max size of the "status" string in Checklinks_Result
-#define REG_ERR_SIZE 100  // max size for the "errbuf" string in "regerror"
+#define REG_ERR_SIZE 256  // max size for the "errbuf" string in "regerror"
 
 #define BUFFER_SIZE 4096 // buffer size for when reading the contents of a URL or file
-#define TMP_SIZE 11      // size of the temporary file for checking for regex patterns
+#define TMP_NAME_SIZE 11 // size of the name of the temporary file for checking for regex patterns
 
 #define CHECKLINKS_RESULT_NUM 100 // default number of Checklinks_Result elements
 
