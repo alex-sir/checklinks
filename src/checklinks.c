@@ -24,7 +24,7 @@
 
 int main(int argc, char *argv[])
 {
-    // no URL or any option is provided
+    // no URL/file or any option is provided
     if (argc == 1)
     {
         usage(argv[0]);
@@ -81,10 +81,22 @@ int main(int argc, char *argv[])
         char url[URL_MAX] = "";
         strncpy(url, argv[optind], sizeof(url));
 
-        if (process_url(url, &regex_pattern, &checklinks_results) == -1)
+        // DON'T run in parallel
+        if (!options_given.parallel)
         {
-            free(checklinks_results.urls);
-            exit(EXIT_FAILURE);
+            if (process_url(url, &regex_pattern, &checklinks_results, 0) == -1)
+            {
+                free(checklinks_results.urls);
+                exit(EXIT_FAILURE);
+            }
+        }
+        else // run in parallel
+        {
+            if (process_url(url, &regex_pattern, &checklinks_results, 1) == -1)
+            {
+                free(checklinks_results.urls);
+                exit(EXIT_FAILURE);
+            }
         }
     }
     else // work with a local file

@@ -7,8 +7,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/checklinks",
             "args": [
-                "-f",
-                "/home/axc/Dev/cpts360/pa/checklinks/test/index.html"
+                "-p",
+                "https://users.tricity.wsu.edu/~bobl/cpts360/"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

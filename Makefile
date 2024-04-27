@@ -31,6 +31,9 @@ test: checklinks # test with URL
 testf: checklinks # test with local file
 	./checklinks -f test/index.html
 
+testp: checklinks # test with URL running in parallel
+	./checklinks -p https://users.tricity.wsu.edu/~bobl/cpts360/
+
 # Check for memory leaks
 mem: checklinks
 	valgrind --leak-check=full --show-leak-kinds=all -s ./checklinks https://users.tricity.wsu.edu/~bobl/cpts360/
