@@ -11,6 +11,7 @@
 #include <stdlib.h> // for system(), mkstemp(), malloc()
 #include <unistd.h> // for close(), fstat(), lseek(), read()
 #include <string.h> // for strlen(), strncpy()
+#include <fcntl.h>  // for open()
 #include <regex.h>  // for regex_t, regmatch_t, regcomp(), regexec(), regerror()
 #include <sys/stat.h>
 
@@ -90,6 +91,15 @@ extern int download_url(const char url[], const char tmp_filename[]);
  */
 extern int is_dup_url(Checklinks_Results *checklinks_results, const char url[]);
 /**
+ * @brief search through an HTML file to find and test URLs for existence
+ *
+ * @param temp_buffer string holding the contents of the HTML file
+ * @param regex_pattern regex pattern to look for when looking for URLs
+ * @param checklinks_results address to a Checklinks_Results struct
+ * @return int 0 = success | -1 = error
+ */
+extern int search_content(char *temp_buffer, const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
+/**
  * @brief check the status of all URLs in an HTML file downloaded from a URL
  *
  * @param temp_fd file descriptor to a temporary file where the downloaded HTML of a URL is stored
@@ -107,5 +117,14 @@ extern int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_R
  * @return int 0 = success | -1 = error
  */
 extern int process_url(char url[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
+/**
+ * @brief process all URLs present in a local HTML file by attempting to access them
+ *
+ * @param local_filename string of a path to a local file
+ * @param regex_pattern regex pattern to look for when looking for URLs
+ * @param checklinks_results address to a Checklinks_Results struct
+ * @return int int 0 = success | -1 = error
+ */
+extern int process_file(const char local_filename[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results);
 
 #endif

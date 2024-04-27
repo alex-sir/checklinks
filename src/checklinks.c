@@ -75,19 +75,24 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // work with a local file
-    if (options_given.local_filename)
-    {
-        char local_filename[PATHNAME_MAX] = "";
-        strncpy(local_filename, argv[optind], sizeof(local_filename));
-        // open the local file
-    }
-    else // work with a URL
+    // work with a URL
+    if (!options_given.local_filename)
     {
         char url[URL_MAX] = "";
         strncpy(url, argv[optind], sizeof(url));
 
         if (process_url(url, &regex_pattern, &checklinks_results) == -1)
+        {
+            free(checklinks_results.urls);
+            exit(EXIT_FAILURE);
+        }
+    }
+    else // work with a local file
+    {
+        char local_filename[PATHNAME_MAX] = "";
+        strncpy(local_filename, argv[optind], sizeof(local_filename));
+
+        if (process_file(local_filename, &regex_pattern, &checklinks_results) == -1)
         {
             free(checklinks_results.urls);
             exit(EXIT_FAILURE);

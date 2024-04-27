@@ -25,8 +25,11 @@ checklinks: src/checklinks.o src/find.o src/helpers.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # Run tests
-test: checklinks
+test: checklinks # test with URL
 	./checklinks https://users.tricity.wsu.edu/~bobl/cpts360/
+
+testf: checklinks # test with local file
+	./checklinks -f test/index.html
 
 # Check for memory leaks
 mem: checklinks

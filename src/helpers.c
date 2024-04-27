@@ -20,7 +20,7 @@ void help(void)
 {
     printf("Check every link on a web page or in an HTML file for validity (URL is default).\n\n");
     printf("Options:\n");
-    printf("-f   treat the \"urlOrFilename\" argument as a local filename\n");
+    printf("-f   treat the \"urlOrFilename\" argument as a local file\n");
     printf("-h   print a help message and exit (this page)\n");
     printf("-p   run in parallel\n");
 }

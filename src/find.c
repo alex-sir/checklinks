@@ -112,34 +112,8 @@ int is_dup_url(Checklinks_Results *checklinks_results, const char url[])
     return 0; // link is NOT a duplicate
 }
 
-int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
+int search_content(char *temp_buffer, const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
 {
-    // get the size of the temp file
-    struct stat temp_stat;
-    if (fstat(temp_fd, &temp_stat) == -1)
-    {
-        print_err();
-        return -1;
-    }
-    off_t temp_size = temp_stat.st_size;
-
-    // string to hold the contents of the temp file for parsing
-    char *temp_buffer = (char *)malloc(temp_size + 1);
-    if (temp_buffer == NULL)
-    {
-        print_err();
-        return -1;
-    }
-
-    // copy all the contents of the temp file to the buffer
-    if (read(temp_fd, temp_buffer, temp_size) == -1)
-    {
-        free(temp_buffer);
-        print_err();
-        return -1;
-    }
-    temp_buffer[temp_size] = '\0';
-
     char *current_match = temp_buffer;
     int regexec_result = 0;
     const int NUM_GROUPS = 3; // number of groups in the regex pattern
@@ -187,6 +161,44 @@ int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_Results 
         current_match += match[0].rm_eo; // move pointer to the end of the match
     }
 
+    return 0;
+}
+
+int check_content(int temp_fd, const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
+{
+    // get the size of the temp file
+    struct stat temp_stat;
+    if (fstat(temp_fd, &temp_stat) == -1)
+    {
+        print_err();
+        return -1;
+    }
+    off_t temp_size = temp_stat.st_size;
+
+    // string to hold the contents of the temp file for parsing
+    char *temp_buffer = (char *)malloc(temp_size + 1);
+    if (temp_buffer == NULL)
+    {
+        print_err();
+        return -1;
+    }
+
+    // copy all the contents of the temp file to the buffer
+    if (read(temp_fd, temp_buffer, temp_size) == -1)
+    {
+        free(temp_buffer);
+        print_err();
+        return -1;
+    }
+    temp_buffer[temp_size] = '\0';
+
+    // search through the buffer and fill in checklinks_results as appropriate
+    if (search_content(temp_buffer, regex_pattern, checklinks_results) == -1)
+    {
+        free(temp_buffer);
+        return -1;
+    }
+
     free(temp_buffer);
     return 0;
 }
@@ -227,6 +239,29 @@ int process_url(char url[], const regex_t *regex_pattern, Checklinks_Results *ch
     }
 
     if (remove(tmp_filename) == -1)
+    {
+        print_err();
+        return -1;
+    }
+
+    return 0;
+}
+
+int process_file(const char local_filename[], const regex_t *regex_pattern, Checklinks_Results *checklinks_results)
+{
+    int local_file = open(local_filename, O_RDONLY);
+    if (local_file == -1)
+    {
+        print_err();
+        return -1;
+    }
+
+    if (check_content(local_file, regex_pattern, checklinks_results) == -1)
+    {
+        return -1;
+    }
+
+    if (close(local_file) == -1)
     {
         print_err();
         return -1;

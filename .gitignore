@@ -1,3 +1,4 @@
 *.o
 checklinks
 PA5_Checklinks_Help
+test*
