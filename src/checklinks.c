@@ -17,7 +17,7 @@
 #include <stdlib.h> // for exit, malloc(), free()
 #include <string.h> // for strncpy()
 #include <unistd.h> // for getopt()
-#include <regex.h>  // regex_t
+#include <regex.h>  // for regex_t
 
 #include "find.h"
 #include "helpers.h"
@@ -57,6 +57,14 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             break;
         }
+    }
+
+    // make sure the user provides a URL or file
+    if ((options_given.local_filename || options_given.parallel) &&
+        optind > argc - 1)
+    {
+        fprintf(stderr, "checklinks: please provide a URL or file\n");
+        exit(EXIT_FAILURE);
     }
 
     // make the regex pattern for URLs found in links
